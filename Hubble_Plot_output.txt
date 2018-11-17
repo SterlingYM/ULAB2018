@@ -1,0 +1,37 @@
+Total number of data: 52721
+Number of data with missing values: 43277
+Number of data with exact duplicate of v value (orange plot): 6222
+Number of 'good' data (blue plot): 3222
+This descrete values of velocity is considered due to low sig-fig of z-data.
+
+Sample of 'high precision' data (blue-plot):
+Name           m         M         z          
+SN2011fe        9.480   -18.280	   0.0008        
+SN2013dy       12.800   -18.381	   0.00388       
+SN2012dn       13.670   -19.606	   0.01018       
+SN1999ee       14.500   -18.600	   0.01141       
+SN2014J         8.980   -18.400	   0.000677      
+SN2005cf       13.320   -18.700	   0.006461      
+SN1998bu       11.440   -18.500	   0.00299       
+SN2007af       13.050   -18.300	   0.005464      
+SN2015F        13.100   -18.800	   0.0054        
+SN2004eo       15.140   -18.500	   0.014734      
+
+Sample of 'low precision' data (orange-plot):
+Name           m         M         z          
+LSQ12gdj       15.020   -21.000	   0.0           
+SN2016dxv      16.130   -19.000	   0.0           
+SN2012hr       13.710   -19.000	   0.0           
+PS15bom        15.840   -19.000	   0.0           
+ASASSN-14lp    11.930   -19.841	   0.0051        
+SN1937D        10.500   -19.000	   0.0051        
+SN2013cs       13.830   -19.000	   0.0           
+SN2015bw       17.080   -19.000	   0.0           
+SN2001bf       14.190   -19.800	   0.0155        
+SN2001cn       14.800   -19.000	   0.0155        
+
+From this data analysis, it is clear that precision of spectroscopic data is critical.
+
+
+Part 2: fitting
+Hubble Constant H0 = 6.31455258885003e-05

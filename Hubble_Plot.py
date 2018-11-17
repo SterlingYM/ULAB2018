@@ -1,7 +1,16 @@
-#!/usr/bin/env python
-# coding: utf-8
+# ULAB 2018 Hubble Diagram workshop
+# created by Yukei Sterling Murakami
+# All rights reserved. Educational purpose only.
 
-# In[41]:
+
+# Part 1: import, manipulate, and plot data
+# for most of experimental (= not theoretical) researches,
+# dealing with data takes most of time.
+# This first part has several functions for data manipulation.
+# Read comments carefully, and try to do it by yourself!
+
+# this python code is purposed on creating Hubble Diagram
+# using "The Open Supernova Catalog" csv file.
 
 
 import numpy as np
@@ -206,12 +215,9 @@ def my_model(x,H):
 
 def fitting(model,xdata,ydata):
     # data fitting
-    par0 = np.array([1])
+    par0 = np.array([1]) # initial guess
     par, cov = fitter.curve_fit(model, xdata, ydata, par0, absolute_sigma=True)
     
-    #test
-    #print(par[0])
-
     # plot
     x = np.linspace(0,max(xdata),10**4)
     y_fitted = my_model(x,par[0])
