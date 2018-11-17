@@ -116,7 +116,7 @@ def dist_velocity(name,app_mag,abs_mag,z):
 c = 3.0 * 10 ** 5
 
 # csv file: This file should contain: [Name, Date, m, M, z, Type]
-filename = 'The Open Supernova CatalogComplete.csv'
+filename = 'TheOpenSupernovaCatalog_Complete.csv'
 
 #index of each data type in 'row'. Change this if data format is different
 name_index = 0
