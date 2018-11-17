@@ -232,7 +232,7 @@ def fitting(model,xdata,ydata):
     plt.show()
 
     # result
-    print("Hubble Constant H0 = {}".format(par[0]))
+    print("Hubble Constant H0 = {:.4} [km/(s*pc)]".format(par[0]))
 
 
 print("\n\nPart 2: fitting")
