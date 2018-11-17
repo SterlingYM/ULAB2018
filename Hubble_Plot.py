@@ -216,12 +216,18 @@ def fitting(model,xdata,ydata):
     x = np.linspace(0,max(xdata),10**4)
     y_fitted = my_model(x,par[0])
     
-    plt.figure()
-    plt.plot(x,y_fitted)
-    plt.scatter(xdata,ydata)
+    plt.figure(figsize = (15,5))
+    plt.plot(x,y_fitted,c='orange')
+    plt.scatter(xdata,ydata,s=5)
+    plt.title("Fitted function")
+    plt.legend(['da/dt = {:2f}a'.format(par[0])])
+    plt.xlabel('distance [pc]')
+    plt.ylabel('velocity [km/s]')
     plt.show()
 
     # result
     print("Hubble Constant H0 = {}".format(par[0]))
 
+
+print("\n\nPart 2: fitting")
 fitting(my_model,dist,v)
