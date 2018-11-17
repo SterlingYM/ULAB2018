@@ -116,7 +116,7 @@ def dist_velocity(name,app_mag,abs_mag,z):
 c = 3.0 * 10 ** 5
 
 # csv file: This file should contain: [Name, Date, m, M, z, Type]
-filename = 'TheOpenSupernovaCatalog_Complete.csv'
+filename = 'TheOpenSupernovaCatalog.csv'
 
 #index of each data type in 'row'. Change this if data format is different
 name_index = 0
@@ -182,13 +182,21 @@ for i in range(10): print('{:11}{:10.3f}{:10.3f}\t   {:<14}'.format(*rejected_da
 print('\nFrom this data analysis, it is clear that precision of spectroscopic data is critical.')
 
 
-# In[ ]:
-
-
-
-
-
-# In[ ]:
+# Part 2: fitting model with data
+# 
+# The word "fitting" is often used to draw a line on the data.
+# this "fitting" requires two steps:
+#
+#   (1) construct a model
+#       in cosmology, 'model' refers to a set of theoretical equations.
+#       'model' is coded as a function, and this model uses a very early model
+#       with assumption of constant H.
+#
+#   (2) find best-fit parameters
+#       once model is prepared, we use a fitting function that automatically
+#       finds the best-fit value for parameters.
+#       see documentation of scipy.optimize.
+#       astropy has also fitter, and it is often used for more complicated model.
 
 
 import scipy.optimize as fitter
