@@ -180,39 +180,6 @@ def degreeToRadian(ra, dec):
     return raRad, decRad 
 
 
-def plot_mwd(RA, Dec, Color, org=0, title='Mollweide projection', projection='mollweide'):
-    ''' RA, Dec are arrays of the same length.
-    RA takes values in [0,360), Dec in [-90,90],
-    which represent angles in degrees.
-    org is the origin of the plot, 0 or a multiple of 30 degrees in [0,360).
-    title is the title of the figure.
-    projection is the kind of projection: 'mollweide', 'aitoff', 'hammer', 'lambert'
-    '''
-    x = [np.remainder(n+360-org,360) for n in RA] # shift RA values
-    for i in range(len(x)):
-        if x[i] > 180:
-            x[i] -=360    # scale conversion to [-180, 180]
-        x[i] =-x[i]    # reverse the scale: East to the left
-    colombi1_cmap = ListedColormap(np.loadtxt("CMBColorMap.txt")/255.)
-    colombi1_cmap.set_bad("gray") # color of missing pixels
-    colombi1_cmap.set_under("white") # color of background, necessary if you want to use
-    tick_labels = np.array([150, 120, 90, 60, 30, 0, 330, 300, 270, 240, 210])
-    tick_labels = np.remainder(tick_labels+360+org,360)
-    fig = plt.figure(figsize=(10, 5))
-    ax = fig.add_subplot(111, projection=projection, facecolor ='White')
-    rand = np.random.random_sample((8651,))
-    ax.scatter(np.radians(x), np.radians(Dec), c = Color, s = 1, alpha=1, cmap= colombi1_cmap)  # convert degrees to radians
-    ax.set_xticklabels(tick_labels)     # we add the scale on the x axis
-    ax.set_title(title)
-    ax.title.set_fontsize(15)
-    ax.set_xlabel("RA")
-    ax.xaxis.label.set_fontsize(12)
-    ax.set_ylabel("Dec")
-    ax.yaxis.label.set_fontsize(12)
-    ax.grid(True)
-    #plt.colorbar()  # show color scale
-    #plt.show()
-
 def plotLinearH():
     approved_data, dist, v, rejected_data, dist_rej, v_rej = dist_velocity(name, app_mag, abs_mag, z, ebv)
     print("Total number of data: " + str(len(v)))
@@ -231,7 +198,7 @@ def createPoints(ra, dec):
         points.append([ra[i], dec[i]])
     return points
 
-def interpolateH(ra, dec, Color):
+def interpolateH(ra, dec, Color): #smooth interpolation
     points = createPoints(ra, dec)
     grid_x, grid_y = np.mgrid[0:1:360j, 0:1:180j]
     grid = griddata(points, Color, (grid_x, grid_y), method='cubic')
@@ -254,11 +221,13 @@ def interpolateH(ra, dec, Color):
     plot_mwd(newRA, newDEC, newColor)
     plt.show()
 
+
+
 def calculateColor(ave_z, dist, v):
     Color = []
     for i in range((len(dist))):
         Color.append((v[i]/ dist[i] - ave_z) / ave_z)
-    if False:
+    if True:
         max = 0
         min = 1000000000
         for i in range(len(Color)):
@@ -328,6 +297,86 @@ def fitting(model, xdata, ydata):
     #print("y-intercept: " + str(par[1]))
     #print("accel: " + str(par[1]))
 
+def plot_mwd(RA, Dec, Color, ifFillRect, org=0, title='Mollweide projection', projection='mollweide'):
+    ''' RA, Dec are arrays of the same length.
+    RA takes values in [0,360), Dec in [-90,90],
+    which represent angles in degrees.
+    org is the origin of the plot, 0 or a multiple of 30 degrees in [0,360).
+    title is the title of the figure.
+    projection is the kind of projection: 'mollweide', 'aitoff', 'hammer', 'lambert'
+    '''
+    x = [np.remainder(n+360-org,360) for n in RA] # shift RA values
+    for i in range(len(x)):
+        if x[i] > 180:
+            x[i] -=360    # scale conversion to [-180, 180]
+        x[i] =-x[i]    # reverse the scale: East to the left
+    colombi1_cmap = ListedColormap(np.loadtxt("CMBColorMap.txt")/255.)
+    colombi1_cmap.set_bad("gray") # color of missing pixels
+    colombi1_cmap.set_under("white") # color of background, necessary if you want to use
+    tick_labels = np.array([150, 120, 90, 60, 30, 0, 330, 300, 270, 240, 210])
+    tick_labels = np.remainder(tick_labels+360+org,360)
+    fig = plt.figure(figsize=(10, 5))
+    ax = fig.add_subplot(111, projection=projection, facecolor ='White')
+    rand = np.random.random_sample((8651,))
+    ax.scatter(np.radians(x), np.radians(Dec), c = Color, s = 1, alpha=1, cmap= colombi1_cmap)  # convert degrees to radians
+    #ax.scatter(0, 0, c='red', s = 10)
+    if ifFillRect:
+        fillRect(x, Dec, Color, 30, 10, ax)
+
+    ax.set_xticklabels(tick_labels)     # we add the scale on the x axis
+    ax.set_title(title)
+    ax.title.set_fontsize(15)
+    ax.set_xlabel("RA")
+    ax.xaxis.label.set_fontsize(12)
+    ax.set_ylabel("Dec")
+    ax.yaxis.label.set_fontsize(12)
+    ax.grid(True)
+    #plt.colorbar()  # show color scale
+    plt.show()
+
+def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
+    whiteOutLimit = 10
+    fillDensity = 0.1
+    totCol = (int)(360/rectW)
+    totRow = (int)(180/rectH)
+    colorArray = np.loadtxt("CMBColorMap.txt")/255
+    print("rectangleNum: " + (str)(totCol*totRow))
+    rectColor = [x[:] for x in [[0] * totCol] * totRow]
+    rectColorPointCount = [x[:] for x in [[0] * totCol] * totRow]
+    for i in range(len(ra)):
+        row = (int)((dec[i] + 90)//rectH)
+        col = (int)(ra[i]//rectW)
+        rectColor[row][col] += Color[i]
+        rectColorPointCount[row][col] += 1
+    for row in range(totRow):
+        for col in range(totCol):
+            if rectColorPointCount[row][col] < whiteOutLimit:
+                rectColor[row][col] = -1
+            else:
+                rectColor[row][col] = rectColor[row][col] / rectColorPointCount[row][col]
+    np.savetxt("rectColor.cvs", rectColor, delimiter=",", fmt='%3.3f')
+    if False:
+        for row in range(totRow):
+            for col in range(totCol):
+                rectColorPointCount[row][col] = round((rectColorPointCount[row][col]), 2)
+    np.savetxt("rectColorPointCount.cvs", rectColorPointCount, delimiter=",", fmt='%3.3i')
+    for row in range(totRow):
+        for col in range(totCol):
+            wRA = col * rectW
+            if wRA >= 180:
+                wRA = wRA - 360 
+            W = np.arange(np.radians(wRA), np.radians(wRA + rectW + 4.3), fillDensity)
+            if rectColor[row][col] == -1:
+                fillColor = 'blue'
+            else:
+                index = (int)((rectColor[row][col] - 0.032) * 256/ (0.04-0.032))
+                fillColor = colorArray[index]
+                ax.fill_between(W, np.radians(row * rectH - 90), np.radians((row + 1) * rectH - 90), facecolor = fillColor)
+                print(index)
+            
+    #ax.fill_between(np.arange(np.radians(-170), np.radians(-150), 0.01), np.radians(-20), np.radians(20), facecolor = colorArray[255])
+
+
 nameIND = 0
 dateIND = 1
 app_magIND = 2
@@ -361,5 +410,5 @@ print("number of data points between " + str(zeroDecDown) + " and " + str(zeroDe
 print("z value range from " + str(maxZ) + " to " + str(minZ))
 ave_z, dist, v = plotLinearH()
 Color = calculateColor(ave_z, dist, v)
-plot_mwd(ra, dec, Color)
-interpolateH(ra, dec, Color)
+plot_mwd(ra, dec, Color, True)
+
