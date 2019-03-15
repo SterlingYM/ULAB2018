@@ -223,25 +223,30 @@ def interpolateH(ra, dec, Color): #smooth interpolation
     plot_mwd(newRA, newDEC, newColor)
     plt.show()
 
-upFilter = 0.043
-downFilter = 0.035
+#upFilter = 0.043
+#downFilter = 0.035
+upFilter = 0.1
+downFilter = -0.1
 
 def calculateColor(ave_z, dist, v):
     Color = []
     for i in range((len(dist))):
         Color.append((v[i]/ dist[i] - ave_z) / ave_z)
-    if True:
-        max = 0
-        min = 1000000000
-        for i in range(len(Color)):
-            if Color[i] > max:
-                max = Color[i]
-            if Color[i] < min:
-                min = Color[i]
+    
+    max = 0
+    min = 1000000000
+    for i in range(len(Color)):
+        if Color[i] > max:
+            max = Color[i]
+        if Color[i] < min:
+            min = Color[i]
+        #(after normalization)
+    if False:
         for i in range(len(Color)):
             Color[i] = (Color[i] - min) / (max - min)
-        over = 0
-        under = 0
+    over = 0
+    under = 0
+    if True:
         for i in range(len(Color)):
             if Color[i] > upFilter:
                 Color[i] = upFilter
@@ -249,10 +254,10 @@ def calculateColor(ave_z, dist, v):
             if Color[i] < downFilter:
                 Color[i] = downFilter
                 under = under + 1
-        print(max)
-        print(len(Color))
-        print(over)
-        print(under)
+    print(max)
+    print(len(Color))
+    print(over)
+    print(under)
     for i in range(4):
         print(Color[i])
 
@@ -322,10 +327,10 @@ def plot_mwd(RA, Dec, Color, ifFillRect, org=0, title='Mollweide projection', pr
     ax = fig.add_subplot(111, projection=projection, facecolor ='darkgray')
     rand = np.random.random_sample((8651,))
     ax.scatter(np.radians(x), np.radians(Dec), c = Color, s = 1, alpha=1, cmap= colombi1_cmap)  # convert degrees to radians
-    fig.colorbar(ax, orientation='horizontal', fraction=.1)
+    #fig.colorbar(ax, orientation='horizontal', fraction=.1)
     #ax.scatter(0, 0, c='red', s = 10)
     if ifFillRect:
-        fillRect(x, Dec, Color, 30, 15, ax)
+        fillRect(x, Dec, Color, 6, 3, ax)
 
     ax.set_xticklabels(tick_labels)     # we add the scale on the x axis
     ax.set_title(title)
