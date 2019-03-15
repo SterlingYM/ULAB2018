@@ -28,6 +28,8 @@ from matplotlib.colors import ListedColormap
 #Linear fit: Hubble constants: 6.329e-05 data points: 8651
 #contrast enhancement centered around 0.036 +- 0.004
 
+
+
 def hasColumn(row, index):
     if row[index] == '':
         return False
@@ -221,7 +223,8 @@ def interpolateH(ra, dec, Color): #smooth interpolation
     plot_mwd(newRA, newDEC, newColor)
     plt.show()
 
-
+upFilter = 0.043
+downFilter = 0.035
 
 def calculateColor(ave_z, dist, v):
     Color = []
@@ -240,17 +243,17 @@ def calculateColor(ave_z, dist, v):
         over = 0
         under = 0
         for i in range(len(Color)):
-            if Color[i] > 0.04:
-                Color[i] = 0.04
+            if Color[i] > upFilter:
+                Color[i] = upFilter
                 over = over + 1
-            if Color[i] < 0.032:
-                Color[i] = 0.032
+            if Color[i] < downFilter:
+                Color[i] = downFilter
                 under = under + 1
         print(max)
         print(len(Color))
         print(over)
         print(under)
-    for i in range(10):
+    for i in range(4):
         print(Color[i])
 
     np.savetxt("calculatedColor.cvs", Color, delimiter=",")
@@ -281,7 +284,7 @@ def fitting(model, xdata, ydata):
     x = np.linspace(0, max(xdata), 10**4)
     y_fitted = my_model0(x, par[0])
     
-    if True:
+    if False:
         plt.figure(figsize = (15,5))
         plt.plot(x,y_fitted, c='orange')
         plt.scatter(xdata, ydata, s=5)
@@ -316,12 +319,13 @@ def plot_mwd(RA, Dec, Color, ifFillRect, org=0, title='Mollweide projection', pr
     tick_labels = np.array([150, 120, 90, 60, 30, 0, 330, 300, 270, 240, 210])
     tick_labels = np.remainder(tick_labels+360+org,360)
     fig = plt.figure(figsize=(10, 5))
-    ax = fig.add_subplot(111, projection=projection, facecolor ='White')
+    ax = fig.add_subplot(111, projection=projection, facecolor ='darkgray')
     rand = np.random.random_sample((8651,))
     ax.scatter(np.radians(x), np.radians(Dec), c = Color, s = 1, alpha=1, cmap= colombi1_cmap)  # convert degrees to radians
+    fig.colorbar(ax, orientation='horizontal', fraction=.1)
     #ax.scatter(0, 0, c='red', s = 10)
     if ifFillRect:
-        fillRect(x, Dec, Color, 30, 10, ax)
+        fillRect(x, Dec, Color, 30, 15, ax)
 
     ax.set_xticklabels(tick_labels)     # we add the scale on the x axis
     ax.set_title(title)
@@ -335,8 +339,9 @@ def plot_mwd(RA, Dec, Color, ifFillRect, org=0, title='Mollweide projection', pr
     plt.show()
 
 def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
-    whiteOutLimit = 10
-    fillDensity = 0.1
+    whiteOutLimit = 1 #if num < whiteOutLimit, the region becomes white
+    fillGapW = rectW/2000
+    fillGapH = rectH/100
     totCol = (int)(360/rectW)
     totRow = (int)(180/rectH)
     colorArray = np.loadtxt("CMBColorMap.txt")/255
@@ -365,14 +370,14 @@ def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
             wRA = col * rectW
             if wRA >= 180:
                 wRA = wRA - 360 
-            W = np.arange(np.radians(wRA), np.radians(wRA + rectW + 4.3), fillDensity)
+            W = np.array([np.radians(wRA), np.radians(wRA + rectW) + fillGapW])
             if rectColor[row][col] == -1:
-                fillColor = 'blue'
+                fillColor = 'purple'
             else:
-                index = (int)((rectColor[row][col] - 0.032) * 256/ (0.04-0.032))
+                index = (int)((rectColor[row][col] - downFilter) * 255/ (upFilter-downFilter))
                 fillColor = colorArray[index]
-                ax.fill_between(W, np.radians(row * rectH - 90), np.radians((row + 1) * rectH - 90), facecolor = fillColor)
-                print(index)
+                ax.fill_between(W, np.radians(row * rectH - 90), np.radians((row + 1) * rectH - 90 + fillGapH), facecolor = fillColor)
+                #print(index)
             
     #ax.fill_between(np.arange(np.radians(-170), np.radians(-150), 0.01), np.radians(-20), np.radians(20), facecolor = colorArray[255])
 
