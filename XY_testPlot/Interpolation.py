@@ -420,6 +420,9 @@ print("number of data points between " + str(zeroDecDown) + " and " + str(zeroDe
 print("z value range from " + str(maxZ) + " to " + str(minZ))
 ave_z, dist, v = plotLinearH()
 Color = calculateColor(ave_z, dist, v)
-plot_mwd(ra, dec, Color, True)
 
-print("hi")
+
+image= np.array(plt.imread('Figure_1.png',2))
+myplot=plt.imshow(image)
+plt.colorbar(myplot)
+plt.show()
