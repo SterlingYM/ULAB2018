@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import csv
 import scipy.optimize as fitter
 from scipy.interpolate import griddata
@@ -103,7 +103,7 @@ def dist_velocity(name, app_mag, abs_mag, z, ebv):
 c = 3.0 * 10 ** 5 #unit [km/s]
 
 #if it does not exist, put -1; if multiple value, take arithmetic mean
-def purifyValues(v, isDeg, hasSign): 
+def purifyValues(v, isDeg, hasSign):
     for i in range(len(v)):
         if v[i] == '':
            v[i] = -1
@@ -179,7 +179,7 @@ def degreeToRadian(ra, dec):
         raRad.append(ra[i]*np.pi/180)
     for i in range(len(dec)):
         decRad.append((dec[i] - 180) * np.pi/180)
-    return raRad, decRad 
+    return raRad, decRad
 
 
 def plotLinearH():
@@ -232,7 +232,7 @@ def calculateColor(ave_z, dist, v):
     Color = []
     for i in range((len(dist))):
         Color.append((v[i]/ dist[i] - ave_z) / ave_z)
-    
+
     max = 0
     min = 1000000000
     for i in range(len(Color)):
@@ -267,7 +267,7 @@ def calculateColor(ave_z, dist, v):
 
 def normalize(v):
     norm = np.linalg.norm(v)
-    if norm == 0: 
+    if norm == 0:
        return v
     return v / norm
 
@@ -284,11 +284,11 @@ def fitting(model, xdata, ydata):
     # data fitting
     par0 = np.array([0.01]) # initial guess
     par, cov = fitter.curve_fit(model, xdata, ydata, par0, absolute_sigma=True)
-    
+
     # plot
     x = np.linspace(0, max(xdata), 10**4)
     y_fitted = my_model0(x, par[0])
-    
+
     if False:
         plt.figure(figsize = (15,5))
         plt.plot(x,y_fitted, c='orange')
@@ -374,7 +374,7 @@ def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
         for col in range(totCol):
             wRA = col * rectW
             if wRA >= 180:
-                wRA = wRA - 360 
+                wRA = wRA - 360
             W = np.array([np.radians(wRA), np.radians(wRA + rectW) + fillGapW])
             if rectColor[row][col] == -1:
                 fillColor = 'purple'
@@ -383,7 +383,7 @@ def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
                 fillColor = colorArray[index]
                 ax.fill_between(W, np.radians(row * rectH - 90), np.radians((row + 1) * rectH - 90 + fillGapH), facecolor = fillColor)
                 #print(index)
-            
+
     #ax.fill_between(np.arange(np.radians(-170), np.radians(-150), 0.01), np.radians(-20), np.radians(20), facecolor = colorArray[255])
 
 
@@ -420,5 +420,9 @@ print("number of data points between " + str(zeroDecDown) + " and " + str(zeroDe
 print("z value range from " + str(maxZ) + " to " + str(minZ))
 ave_z, dist, v = plotLinearH()
 Color = calculateColor(ave_z, dist, v)
-plot_mwd(ra, dec, Color, True)
 
+
+image= np.array(plt.imread('Figure_1.png',2))
+myplot=plt.imshow(image)
+plt.colorbar(myplot)
+plt.show()
