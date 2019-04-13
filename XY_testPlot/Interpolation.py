@@ -367,7 +367,7 @@ def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
     np.savetxt("rectColor.cvs", rectColor, delimiter=",", fmt='%3.3f')
     if False:
         for row in range(totRow):
-            for col in range(totCol):
+             for col in range(totCol):
                 rectColorPointCount[row][col] = round((rectColorPointCount[row][col]), 2)
     np.savetxt("rectColorPointCount.cvs", rectColorPointCount, delimiter=",", fmt='%3.3i')
     for row in range(totRow):
