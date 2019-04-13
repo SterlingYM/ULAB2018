@@ -203,7 +203,7 @@ def calculateColor(ave_z, dist, v):
     print(under)
     for i in range(4):
         print(Color[i])
-    np.savetxt("calculatedColor.cvs", Color, delimiter=",")
+    np.savetxt("calculatedColor.csv", Color, delimiter=",")
     return Color
 
 def my_model0(x, H):
@@ -293,12 +293,12 @@ def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
                 rectColor[row][col] = -1
             else:
                 rectColor[row][col] = rectColor[row][col] / rectColorPointCount[row][col]
-    np.savetxt("rectColor.cvs", rectColor, delimiter=",", fmt='%3.3f')
+    np.savetxt("rectColor.csv", rectColor, delimiter=",", fmt='%3.3f')
     if False:
         for row in range(totRow):
              for col in range(totCol):
                 rectColorPointCount[row][col] = round((rectColorPointCount[row][col]), 2)
-    np.savetxt("rectColorPointCount.cvs", rectColorPointCount, delimiter=",", fmt='%3.3i')
+    np.savetxt("rectColorPointCount.csv", rectColorPointCount, delimiter=",", fmt='%3.3i')
     for row in range(totRow):
         for col in range(totCol):
             wRA = col * rectW
