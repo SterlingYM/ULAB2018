@@ -26,15 +26,12 @@ from matplotlib.colors import ListedColormap
 #disabled the repeating filter (True or...)
 #disabled the name Ia filter
 #Linear fit: Hubble constants: 6.329e-05 data points: 8651
-#contrast enhancement centered around 0.036 +- 0.004
+#contrast enhancement centered around 0.036 +- 0.004 (deleted)
+#Disabled normalization. Keep using degrees instead of radians.
+#Disabled logrithmic scale for contrast enhancement
 
 
-
-# def hasColumn(row, index):
-#     if row[index] == '':
-#         return False
-#     return True
-
+# make sure the data has every column and is discovered after 2004
 def hasAllColumns(row, totColNum):
     for i in range(totColNum):
         if row[i] == '':
@@ -99,10 +96,10 @@ def dist_velocity(name, app_mag, abs_mag, z, ebv):
     return approved_SNe_data, dist, v, rejected_SNe_data, dist_rej, v_rej
 
 
-
 c = 3.0 * 10 ** 5 #unit [km/s]
 
-#if it does not exist, put -1; if multiple value, take arithmetic mean
+#if it does not exist, put -1; if multiple observations, take arithmetic mean
+# if isDeg, run degMinSecToDeg (take care of the sign)
 def purifyValues(v, isDeg, hasSign):
     for i in range(len(v)):
         if v[i] == '':
@@ -118,6 +115,7 @@ def purifyValues(v, isDeg, hasSign):
             v[i] = v_a / len(strList)
     return v
 
+# change (+-)aa:bb:cc to numerical degree. 
 def degMinSecToDeg(str, hasSign):
     strList = str.split(':')
     multiplier = 1
@@ -131,16 +129,17 @@ def degMinSecToDeg(str, hasSign):
         deg += (float)(strList[i]) / (60 ** i)
     return deg * multiplier
 
+# Right Ascension to Degree Conversion formula
 def raToDegree(ra):
     for i in range(len(ra)):
         ra[i] = ra[i] * 15
     return ra
 
-#pls make sure 1st row of data is valid!
+#pls make sure 2nd row of data is valid!
 #return max and min of non-negatives
 def findMaxMin(v):
-    min = v[0]
-    max = v[0]
+    min = v[1]
+    max = v[1]
     for i in range(len(v)):
         if v[i] < 0:
             continue
@@ -150,6 +149,7 @@ def findMaxMin(v):
             max = v[i]
     return max, min
 
+# Count how many points are centered between zeroDecUp and zeroDecDown
 def findZeroDec(dec):
     count = 0
     for i in range(len(dec)):
@@ -158,29 +158,6 @@ def findZeroDec(dec):
     return count
 
 fileName = 'Name2E(B-V).csv'
-
-# def calculateXY(ra, dec):
-#     x = []
-#     y = []
-#     r = 100
-#     for i in range(len(ra)):
-#         phi = dec[i]*np.pi/180
-#         theta = NewtonRaphsonIteration(phi, phi, 30)
-#         xVal = r*2*np.sqrt(2)*(ra[i]-180)/180*np.cos(theta)
-#         yVal = r*np.sqrt(2)*np.sin(theta)
-#         x.append(xVal)
-#         y.append(yVal)
-#     return x, y
-
-def degreeToRadian(ra, dec):
-    raRad = []
-    decRad = []
-    for i in range(len(ra)):
-        raRad.append(ra[i]*np.pi/180)
-    for i in range(len(dec)):
-        decRad.append((dec[i] - 180) * np.pi/180)
-    return raRad, decRad
-
 
 def plotLinearH():
     approved_data, dist, v, rejected_data, dist_rej, v_rej = dist_velocity(name, app_mag, abs_mag, z, ebv)
@@ -194,34 +171,12 @@ def plotLinearH():
     ave_z = fitting(my_model0, dist, v)
     return ave_z, dist, v
 
-def createPoints(ra, dec):
-    points = []
-    for i in range(len(ra)):
-        points.append([ra[i], dec[i]])
-    return points
+# def createPoints(ra, dec):
+#     points = []
+#     for i in range(len(ra)):
+#         points.append([ra[i], dec[i]])
+#     return points
 
-# def interpolateH(ra, dec, Color): #smooth interpolation
-#     points = createPoints(ra, dec)
-#     grid_x, grid_y = np.mgrid[0:1:360j, 0:1:180j]
-#     grid = griddata(points, Color, (grid_x, grid_y), method='cubic')
-#     plt.figure()
-#     plt.imshow(grid, extent=(0,1,0,1), origin='lower', interpolation= 'bicubic')
-#     np.savetxt("interpolatedGrid.cvs", grid, delimiter=",")
-#     totIntDataNum = 360 * 180
-#     newRA = []
-#     newDEC = []
-#     for i in range(totIntDataNum):
-#         newRA.append(i%360)
-#         newDEC.append(-(i//360) + 90)
-#     newColor = []
-#     for row in grid:
-#         for val in row:
-#             if val == 'nan':
-#                 newColor.append(0.04)
-#             else:
-#                 newColor.append(val)
-#     plot_mwd(newRA, newDEC, newColor)
-#     plt.show()
 
 #upFilter = 0.043
 #downFilter = 0.035
@@ -232,18 +187,6 @@ def calculateColor(ave_z, dist, v):
     Color = []
     for i in range((len(dist))):
         Color.append((v[i]/ dist[i] - ave_z) / ave_z)
-
-    max = 0
-    min = 1000000000
-    for i in range(len(Color)):
-        if Color[i] > max:
-            max = Color[i]
-        if Color[i] < min:
-            min = Color[i]
-        #(after normalization)
-    if False:
-        for i in range(len(Color)):
-            Color[i] = (Color[i] - min) / (max - min)
     over = 0
     under = 0
     if True:
@@ -260,25 +203,11 @@ def calculateColor(ave_z, dist, v):
     print(under)
     for i in range(4):
         print(Color[i])
-
     np.savetxt("calculatedColor.cvs", Color, delimiter=",")
-
     return Color
-
-def normalize(v):
-    norm = np.linalg.norm(v)
-    if norm == 0:
-       return v
-    return v / norm
 
 def my_model0(x, H):
     return H * x
-
-# def my_model1(x, H, k):
-#     return H * x + k
-
-# def my_model2(x, H, a):
-#     return H * x + a * x ** 2
 
 def fitting(model, xdata, ydata):
     # data fitting
@@ -382,10 +311,6 @@ def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
                 index = (int)((rectColor[row][col] - downFilter) * 255/ (upFilter-downFilter))
                 fillColor = colorArray[index]
                 ax.fill_between(W, np.radians(row * rectH - 90), np.radians((row + 1) * rectH - 90 + fillGapH), facecolor = fillColor)
-                #print(index)
-
-    #ax.fill_between(np.arange(np.radians(-170), np.radians(-150), 0.01), np.radians(-20), np.radians(20), facecolor = colorArray[255])
-
 
 nameIND = 0
 dateIND = 1
@@ -403,8 +328,10 @@ dustA = 0 #dust value to adjust distance calculation
 
 name, date, app_mag, abs_mag, ra, dec, z, SNeType, ebv = readIn(fileName)
 
+# purify: convert to numerical values, check the sign, and take the average, 
 ra = purifyValues(ra, True, False)
 dec = purifyValues(dec, True, True)
+# convert right ascension to degree (*15)
 raDegree = raToDegree(ra)
 zeroDecUp = 2
 zeroDecDown = -2
@@ -412,7 +339,6 @@ z = purifyValues(z, False, False)
 app_mag = str2float(app_mag)
 abs_mag = str2float(abs_mag)
 ebv = str2float(ebv)
-raRad, decRad = degreeToRadian(ra, dec)
 
 maxZ, minZ = findMaxMin(z)
 print("Total number of name data: " + str(len(name)))
