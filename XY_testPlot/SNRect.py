@@ -135,11 +135,11 @@ def raToDegree(ra):
         ra[i] = ra[i] * 15
     return ra
 
-#pls make sure 2nd row of data is valid!
+#pls make sure 1st row of data is valid!
 #return max and min of non-negatives
 def findMaxMin(v):
-    min = v[1]
-    max = v[1]
+    min = v[0]
+    max = v[0]
     for i in range(len(v)):
         if v[i] < 0:
             continue
@@ -148,6 +148,13 @@ def findMaxMin(v):
         if max < v[i]:
             max = v[i]
     return max, min
+
+def findMinWithNegatives(v):
+    min = v[0]
+    for i in range(len(v)):
+        if min > v[i]:
+            min = v[i]
+    return min
 
 # Count how many points are centered between zeroDecUp and zeroDecDown
 def findZeroDec(dec):
@@ -180,8 +187,8 @@ def plotLinearH():
 
 #upFilter = 0.043
 #downFilter = 0.035
-upFilter = 0.1
-downFilter = -0.1
+# upFilter = 0.1
+# downFilter = -0.1
 
 def calculateColor(ave_z, dist, v):
     Color = []
@@ -189,19 +196,32 @@ def calculateColor(ave_z, dist, v):
         Color.append((v[i]/ dist[i] - ave_z) / ave_z)
     over = 0
     under = 0
+    # diabled rough contrast enhancement
+    # if True:
+    #     for i in range(len(Color)):
+    #         if Color[i] > upFilter:
+    #             Color[i] = upFilter
+    #             over = over + 1
+    #         if Color[i] < downFilter:
+    #             Color[i] = downFilter
+    #             under = under + 1
     if True:
+        for n in range(100):
+            colorMin = findMinWithNegatives(Color)
+            for i in range(len(Color)):
+                Color[i] = np.log((Color[i] - colorMin + 1) * 1) #to make sure a positive value in the arguement of log
+        # for n in range(3):
+        #     colorMin = findMinWithNegatives(Color)
+        #     for i in range(len(Color)):
+        #         Color[i] = np.sqrt(Color[i] - colorMin) #to make sure a positive value in the arguement of sqrt
+        colorMin = findMinWithNegatives(Color)       
         for i in range(len(Color)):
-            if Color[i] > upFilter:
-                Color[i] = upFilter
-                over = over + 1
-            if Color[i] < downFilter:
-                Color[i] = downFilter
-                under = under + 1
-    print(max)
+                Color[i] = Color[i] - colorMin
+    # print(max)
     print(len(Color))
-    print(over)
-    print(under)
-    for i in range(4):
+    # print(over)
+    # print(under)
+    for i in range(5):
         print(Color[i])
     np.savetxt("calculatedColor.csv", Color, delimiter=",")
     return Color
@@ -255,7 +275,7 @@ def plot_mwd(RA, Dec, Color, ifFillRect, org=0, title='Mollweide projection', pr
     fig = plt.figure(figsize=(10, 5))
     ax = fig.add_subplot(111, projection=projection, facecolor ='darkgray')
     rand = np.random.random_sample((8651,))
-    ax.scatter(np.radians(x), np.radians(Dec), c = Color, s = 1, alpha=1, cmap= colombi1_cmap)  # convert degrees to radians
+    # ax.scatter(np.radians(x), np.radians(Dec), c = Color, s = 1, alpha=1, cmap= colombi1_cmap)  # convert degrees to radians
     #fig.colorbar(ax, orientation='horizontal', fraction=.1)
     #ax.scatter(0, 0, c='red', s = 10)
     if ifFillRect:
@@ -270,16 +290,18 @@ def plot_mwd(RA, Dec, Color, ifFillRect, org=0, title='Mollweide projection', pr
     ax.yaxis.label.set_fontsize(12)
     ax.grid(True)
     #plt.colorbar()  # show color scale
-    plt.show()
+    # plt.show()
 
 def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
     whiteOutLimit = 1 #if num < whiteOutLimit, the region becomes white
+    # fill in the gap among rectangles
     fillGapW = rectW/2000
     fillGapH = rectH/100
     totCol = (int)(360/rectW)
     totRow = (int)(180/rectH)
     colorArray = np.loadtxt("CMBColorMap.txt")/255
     print("rectangleNum: " + (str)(totCol*totRow))
+    # create array of rectangle color values
     rectColor = [x[:] for x in [[0] * totCol] * totRow]
     rectColorPointCount = [x[:] for x in [[0] * totCol] * totRow]
     for i in range(len(ra)):
@@ -287,18 +309,29 @@ def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
         col = (int)(ra[i]//rectW)
         rectColor[row][col] += Color[i]
         rectColorPointCount[row][col] += 1
+    # take average and eliminate areas with not enough points
+    upFilter = 0
+    downFilter = 300
     for row in range(totRow):
         for col in range(totCol):
             if rectColorPointCount[row][col] < whiteOutLimit:
                 rectColor[row][col] = -1
             else:
                 rectColor[row][col] = rectColor[row][col] / rectColorPointCount[row][col]
+                if rectColor[row][col] < downFilter:
+                    downFilter = rectColor[row][col]
+                if rectColor[row][col] > upFilter:
+                    upFilter = rectColor[row][col]
+
+    print("max color value: " + str(upFilter) + " and min color value: " + str(downFilter))
     np.savetxt("rectColor.csv", rectColor, delimiter=",", fmt='%3.3f')
+    # disabled round. (round is for nicer printing values)
     if False:
         for row in range(totRow):
              for col in range(totCol):
                 rectColorPointCount[row][col] = round((rectColorPointCount[row][col]), 2)
     np.savetxt("rectColorPointCount.csv", rectColorPointCount, delimiter=",", fmt='%3.3i')
+    rectColorArr = []
     for row in range(totRow):
         for col in range(totCol):
             wRA = col * rectW
@@ -306,12 +339,35 @@ def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
                 wRA = wRA - 360
             W = np.array([np.radians(wRA), np.radians(wRA + rectW) + fillGapW])
             if rectColor[row][col] == -1:
-                fillColor = 'purple'
+                fillColor = -1
             else:
-                index = (int)((rectColor[row][col] - downFilter) * 255/ (upFilter-downFilter))
+                index = (int)((rectColor[row][col] - downFilter) * 255 / (upFilter-downFilter))
                 fillColor = colorArray[index]
+                rectColorArr.append(index)
                 ax.fill_between(W, np.radians(row * rectH - 90), np.radians((row + 1) * rectH - 90 + fillGapH), facecolor = fillColor)
 
+    if False:
+        for n in range(3):
+            indexMin = findMinWithNegatives(rectColorArr)
+            for i in range(len(rectColorArr)):
+                rectColorArr[i] = np.log((rectColorArr[i] - indexMin + 1) * 1) #to make sure a positive value in the arguement of log
+        # for n in range(3):
+        #     colorMin = findMinWithNegatives(Color)
+        #     for i in range(len(Color)):
+        #         Color[i] = np.sqrt(Color[i] - colorMin) #to make sure a positive value in the arguement of sqrt
+        indexMin = findMinWithNegatives(rectColorArr)       
+        for i in range(len(rectColorArr)):
+                rectColorArr[i] = (int)(rectColorArr[i] - indexMin)
+
+    plt.figure(figsize = (15,5))
+    plt.scatter(np.arange(len(rectColorArr)), rectColorArr, s=5)
+    print("number of rectangles: " + str(len(rectColorArr)))
+    np.savetxt("rectColorArr.csv", rectColorArr, delimiter=",")
+    plt.title("Color of Rectangles")
+    # plt.legend(['da/dt = {:2f}a'.format(par[0])])
+    plt.xlabel('color by level order')
+    plt.ylabel('color')
+    plt.show()
 nameIND = 0
 dateIND = 1
 app_magIND = 2
@@ -344,9 +400,12 @@ maxZ, minZ = findMaxMin(z)
 print("Total number of name data: " + str(len(name)))
 print("number of data points between " + str(zeroDecDown) + " and " + str(zeroDecUp) + " dec: " + str(findZeroDec(dec)))
 print("z value range from " + str(maxZ) + " to " + str(minZ))
-ave_z, dist, v = plotLinearH()
+# plot linear fit (y-int = 0), and calculated average z
+ave_z, dist, v = plotLinearH() 
+# use the average z to calculate color for each point
 Color = calculateColor(ave_z, dist, v)
-plot_mwd(ra, dec, Color, True)
+# if true, fill the rectangles to cover the points
+plot_mwd(ra, dec, Color, True) 
 
 # image= np.array(plt.imread('Figure_1.png',2))
 # myplot=plt.imshow(image)
