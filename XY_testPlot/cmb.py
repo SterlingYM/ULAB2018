@@ -6,6 +6,11 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 fname = 'LFI_SkyMap_030_1024_R2.01_full.fits'
 tmap= hp.read_map(fname)
-rawdata= fits.open(fname)
-data=hp.visufunc.mollview(tmap, return_projected_map= True)
+hp.visufunc.mollview(tmap)
+plt.show()
+hdulist= fits.open(fname)
+
+
+
+rawdata=np.array(hdulist[1].data)
 print(rawdata)
