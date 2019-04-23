@@ -47,35 +47,42 @@ def get_ecliptic(fname,NSIDE):
     return [x,y,z_e]
 
 def sampling(data,n_rows,n_cols):
-	# data
-	x = data[0]
-	y = data[1]
-	z = data[2]
-
-	# prep
-	x_i = 2*np.pi/n_cols # x increment
-	y_i = np.pi/n_rows # y increment
-	x_low = -np.pi # initial lower bound
-	y_low = -np.pi/2 # initial lower bound
-
-	# loop
-   sampled_data = []
-	for i in range(n_rows):
-		for j in range(n_cols):
-			local_total = 0
-			local_count = 0
-			for k in range(len(z)):
-				if (x_low <= x[k] and x[k] < (x_low + x_i))/
-				and (y_low <= y[k] and y[k] < (y_low + y_i)):
-					local_total += z[k]
-					local_count += 1
-			local_avg = local_total / local_count
-			sampled_data.append([x_low,x_low+x_i,y_low,y_low+y_i,local_avg])
-			x_low += x_i
-		y_low += y_i
+    # data
+    x = data[0]
+    y = data[1]
+    z = data[2]
+    
+    # prep
+    x_i = 2*np.pi/n_cols # x increment
+    y_i = np.pi/n_rows # y increment
+    x_low = -np.pi # initial lower bound
+    y_low = -np.pi/2 # initial lower bound
+     
+    # loop
+    sampled_data = []
+    for i in range(n_rows):
+        x_low = -np.pi # initial lower bound
+        for j in range(n_cols):
+            local_total = 0
+            local_count = 0
+            for k in range(len(z)):
+                if (x_low <= x[k] and x[k] < (x_low + x_i))\
+		and (y_low <= y[k] and y[k] < (y_low + y_i)):
+                    local_total += z[k]
+                    local_count += 1
+            if local_count != 0:
+                local_avg = local_total / local_count
+            else:
+                local_avg = 0
+            local_data = [x_low,x_low+x_i,y_low,y_low+y_i,local_avg]
+            sampled_data.append(local_data)
+            x_low += x_i
+            print('\rSampling Data: {:.1f}% done '.format((n_cols*i+j)*100/(n_rows*n_cols)),end='')
+        y_low += y_i
+    print('')
 	
-	# return data: [[rad,rad,rad,rad,val], . . . ]
-	return sampled_data
+    # return data: [[rad,rad,rad,rad,val], . . . ]
+    return sampled_data
 
 def plot_test(data,niter=30):
     # plot test: plots in mollweide projection with log scaling
@@ -86,11 +93,25 @@ def plot_test(data,niter=30):
     ax.scatter(data[0][0::niter],data[1][0::niter],c=np.log10(data[2][0::niter]),s=1)
     plt.draw()
 
-def plot_rect(data,nrow,ncol):
-    #TODO: write this function
+def plot_rect(data):
+    data = np.array(data)
+    data = data.transpose()
+
+    print(data)
+    # TODO: still need to work on this
+    # plot test: plots in mollweide projection with log scaling
+    # increase niter for faster plot (plots every 'niter'th point
+    plt.figure(figsize=(10,6))
+    ax = plt.subplot(111,projection='mollweide')
+    ax.scatter((data[0]+data[1])/2,(data[2]+data[3])/2,c=np.log10(data[4]),s=100)
+    plt.draw()
+
     return 0
 
 # main
-plot_test(get_galactic(fname,NSIDE),niter=30)
-plot_test(get_ecliptic(fname,NSIDE),niter=30)
+#plot_test(get_galactic(fname,NSIDE),niter=30)
+#plot_test(get_ecliptic(fname,NSIDE),niter=30)
+
+rect_data = sampling(get_ecliptic(fname,NSIDE),16,16)
+plot_rect(rect_data)
 plt.show()
