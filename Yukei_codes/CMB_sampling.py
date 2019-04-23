@@ -46,10 +46,36 @@ def get_ecliptic(fname,NSIDE):
     z_e = hp.Rotator(coord='ge',deg=False).rotate_map_alms(hp.read_map(fname))
     return [x,y,z_e]
 
-def sampling(data,n_sample):
-    #TODO: write down-sampling function here
-    sampled_data = []
-    return sampled_data
+def sampling(data,n_rows,n_cols):
+	# data
+	x = data[0]
+	y = data[1]
+	z = data[2]
+
+	# prep
+	x_i = 2*np.pi/n_cols # x increment
+	y_i = np.pi/n_rows # y increment
+	x_low = -np.pi # initial lower bound
+	y_low = -np.pi/2 # initial lower bound
+
+	# loop
+   sampled_data = []
+	for i in range(n_rows):
+		for j in range(n_cols):
+			local_total = 0
+			local_count = 0
+			for k in range(len(z)):
+				if (x_low <= x[k] and x[k] < (x_low + x_i))/
+				and (y_low <= y[k] and y[k] < (y_low + y_i)):
+					local_total += z[k]
+					local_count += 1
+			local_avg = local_total / local_count
+			sampled_data.append([x_low,x_low+x_i,y_low,y_low+y_i,local_avg])
+			x_low += x_i
+		y_low += y_i
+	
+	# return data: [[rad,rad,rad,rad,val], . . . ]
+	return sampled_data
 
 def plot_test(data,niter=30):
     # plot test: plots in mollweide projection with log scaling
