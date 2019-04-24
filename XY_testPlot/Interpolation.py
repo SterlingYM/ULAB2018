@@ -421,37 +421,47 @@ print("Total number of name data: " + str(len(name)))
 print("number of data points between " + str(zeroDecDown) + " and " + str(zeroDecUp) + " dec: " + str(findZeroDec(dec)))
 print("z value range from " + str(maxZ) + " to " + str(minZ))
 ave_z, dist, v = plotLinearH()
-#print(ave_z)
-#Color = calculateColor(ave_z, dist, v)
-#figure=plot_mwd(ra, dec, Color, True)
+print(ave_z)
+Color = calculateColor(ave_z, dist, v)
+figure=plot_mwd(ra, dec, Color, True)
+
+
 
 
 for i in range(len(ra)):
     if ra[i]>180:
         ra[i] = ra[i]-360
-ra[i] = np.radians(ra[i])
-#print(ra)
 #print(decRad)
 
 local_H0=[]
 for i in range((len(dist))):
-    local_H0.append(v[i]/ dist[i])
-H0_xy= pd.DataFrame(local_H0)
-H0_xy['ra']=ra
-H0_xy['dec']=decRad
-trans_H0_xy=H0_xy.transpose()
-#print(trans_H0_xy)
+    local_H0.append(v[i]/dist[i])
+data_to_sample=[]
+
+
+
+
+
+
+data_to_sample.append(np.radians(ra))
+data_to_sample.append(np.radians(dec))
+
+
+data_to_sample.append(local_H0)
+
 
 def sampling(data,n_rows,n_cols):
     # data
     x = data[0]
+
     y = data[1]
+
     z = data[2]
 
     # prep
     x_i = 2*np.pi/n_cols # x increment
     y_i = np.pi/n_rows # y increment
-    x_low = -np.pi # initial lower bound
+    x_low = -np.pi# initial lower bound
     y_low = -np.pi/2 # initial lower bound
 
     # loop
@@ -480,10 +490,11 @@ def sampling(data,n_rows,n_cols):
     # return data: [[rad,rad,rad,rad,val], . . . ]
     return sampled_data
 
-data_sampled=sampling(trans_H0_xy,8,8)
+data_sampled=sampling(data_to_sample,20,20)
 
 def plot_rect(data):
     data = np.array(data)
+
     data = data.transpose()
 
     print(data)
@@ -498,7 +509,7 @@ def plot_rect(data):
     return 0
 plot_rect(data_sampled)
 plt.show()
-#print(trans_H0_xy)
+
 
 #image= np.array(plt.imread('Figure_1.png',2))
 #myplot=plt.imshow(image)
