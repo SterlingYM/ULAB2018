@@ -17,24 +17,23 @@ import pandas as pd
 #where x-axis is the right ascension and y-axis is the declination
 #domain: x is [0, 360], y is [-90, 90]
 
-#Ia-norm    : spectroscopically/photometrically "normal" type-Ia supernovae
-# Ia-91t     : type-Ia supernovae whose lightcurves/spectra resemble those of SN 1991T
-# Ia-91bg    : type-Ia supernovae whose lightcurves/spectra resemble those of SN 1991bg
-# Ia-pec     : all other type-Ia supernovae (e.g., 2000cx)
-#
-#did not add in the correction from 3.2E(B-V) but not sure if it is right
-#add in a filter of years >= 2005
-#disabled the repeating filter (True or...)
-#disabled the name Ia filter
-#Linear fit: Hubble constants: 6.329e-05 data points: 8651
-#contrast enhancement centered around 0.036 +- 0.004
-
-
-
-# def hasColumn(row, index):
-#     if row[index] == '':
-#         return False
-#     return True
+c = 3.0 * 10 ** 5 #unit [km/s]
+fileName = 'Name2E(B-V).csv'
+upFilter = 0.1
+downFilter = -0.1
+nameIND = 0
+dateIND = 1
+app_magIND = 2
+abs_magIND = 3
+raIND = 4
+decIND = 5
+zIND = 6
+SNeTypeIND = 7
+ebvIND = 8
+totColNum = 9
+dustA = 0 #dust value to adjust distance calculation
+zeroDecUp = 2
+zeroDecDown = -2
 
 def hasAllColumns(row, totColNum):
     for i in range(totColNum):
@@ -101,7 +100,7 @@ def dist_velocity(name, app_mag, abs_mag, z, ebv):
 
 
 
-c = 3.0 * 10 ** 5 #unit [km/s]
+
 
 #if it does not exist, put -1; if multiple value, take arithmetic mean
 def purifyValues(v, isDeg, hasSign):
@@ -158,21 +157,6 @@ def findZeroDec(dec):
             count = count + 1
     return count
 
-fileName = 'Name2E(B-V).csv'
-
-# def calculateXY(ra, dec):
-#     x = []
-#     y = []
-#     r = 100
-#     for i in range(len(ra)):
-#         phi = dec[i]*np.pi/180
-#         theta = NewtonRaphsonIteration(phi, phi, 30)
-#         xVal = r*2*np.sqrt(2)*(ra[i]-180)/180*np.cos(theta)
-#         yVal = r*np.sqrt(2)*np.sin(theta)
-#         x.append(xVal)
-#         y.append(yVal)
-#     return x, y
-
 def degreeToRadian(ra, dec):
     raRad = []
     decRad = []
@@ -200,34 +184,6 @@ def createPoints(ra, dec):
     for i in range(len(ra)):
         points.append([ra[i], dec[i]])
     return points
-
-# def interpolateH(ra, dec, Color): #smooth interpolation
-#     points = createPoints(ra, dec)
-#     grid_x, grid_y = np.mgrid[0:1:360j, 0:1:180j]
-#     grid = griddata(points, Color, (grid_x, grid_y), method='cubic')
-#     plt.figure()
-#     plt.imshow(grid, extent=(0,1,0,1), origin='lower', interpolation= 'bicubic')
-#     np.savetxt("interpolatedGrid.cvs", grid, delimiter=",")
-#     totIntDataNum = 360 * 180
-#     newRA = []
-#     newDEC = []
-#     for i in range(totIntDataNum):
-#         newRA.append(i%360)
-#         newDEC.append(-(i//360) + 90)
-#     newColor = []
-#     for row in grid:
-#         for val in row:
-#             if val == 'nan':
-#                 newColor.append(0.04)
-#             else:
-#                 newColor.append(val)
-#     plot_mwd(newRA, newDEC, newColor)
-#     plt.show()
-
-#upFilter = 0.043
-#downFilter = 0.035
-upFilter = 0.1
-downFilter = -0.1
 
 def calculateColor(ave_z, dist, v):
     Color = []
@@ -274,12 +230,6 @@ def normalize(v):
 
 def my_model0(x, H):
     return H * x
-
-# def my_model1(x, H, k):
-#     return H * x + k
-
-# def my_model2(x, H, a):
-#     return H * x + a * x ** 2
 
 def fitting(model, xdata, ydata):
     # data fitting
@@ -385,77 +335,13 @@ def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
                 fillColor = colorArray[index]
                 ax.fill_between(W, np.radians(row * rectH - 90), np.radians((row + 1) * rectH - 90 + fillGapH), facecolor = fillColor)
                 #print(index)
-
     #ax.fill_between(np.arange(np.radians(-170), np.radians(-150), 0.01), np.radians(-20), np.radians(20), facecolor = colorArray[255])
-
-
-nameIND = 0
-dateIND = 1
-app_magIND = 2
-abs_magIND = 3
-raIND = 4
-decIND = 5
-zIND = 6
-SNeTypeIND = 7
-ebvIND = 8
-
-totColNum = 9
-
-dustA = 0 #dust value to adjust distance calculation
-
-name, date, app_mag, abs_mag, ra, dec, z, SNeType, ebv = readIn(fileName)
-
-ra = purifyValues(ra, True, False)
-dec = purifyValues(dec, True, True)
-raDegree = raToDegree(ra)
-zeroDecUp = 2
-zeroDecDown = -2
-z = purifyValues(z, False, False)
-app_mag = str2float(app_mag)
-abs_mag = str2float(abs_mag)
-ebv = str2float(ebv)
-raRad, decRad = degreeToRadian(ra, dec)
-
-maxZ, minZ = findMaxMin(z)
-print("Total number of name data: " + str(len(name)))
-print("number of data points between " + str(zeroDecDown) + " and " + str(zeroDecUp) + " dec: " + str(findZeroDec(dec)))
-print("z value range from " + str(maxZ) + " to " + str(minZ))
-ave_z, dist, v = plotLinearH()
-print(ave_z)
-Color = calculateColor(ave_z, dist, v)
-figure=plot_mwd(ra, dec, Color, True)
-
-
-
-
-for i in range(len(ra)):
-    if ra[i]>180:
-        ra[i] = ra[i]-360
-#print(decRad)
-
-local_H0=[]
-for i in range((len(dist))):
-    local_H0.append(v[i]/dist[i])
-data_to_sample=[]
-
-
-
-
-
-
-data_to_sample.append(np.radians(ra))
-data_to_sample.append(np.radians(dec))
-
-
-data_to_sample.append(local_H0)
 
 
 def sampling(data,n_rows,n_cols):
     # data
     x = data[0]
-
     y = data[1]
-
     z = data[2]
 
     # prep
@@ -490,7 +376,6 @@ def sampling(data,n_rows,n_cols):
     # return data: [[rad,rad,rad,rad,val], . . . ]
     return sampled_data
 
-data_sampled=sampling(data_to_sample,20,20)
 
 def plot_rect(data):
     data = np.array(data)
@@ -506,12 +391,41 @@ def plot_rect(data):
     ax.scatter((data[0]+data[1])/2,(data[2]+data[3])/2,c=np.log10(data[4]),s=100)
     plt.draw()
 
-    return 0
+
+
+#main
+name, date, app_mag, abs_mag, ra, dec, z, SNeType, ebv = readIn(fileName)
+
+ra = purifyValues(ra, True, False)
+dec = purifyValues(dec, True, True)
+raDegree = raToDegree(ra)
+z = purifyValues(z, False, False)
+app_mag = str2float(app_mag)
+abs_mag = str2float(abs_mag)
+ebv = str2float(ebv)
+raRad, decRad = degreeToRadian(ra, dec)
+
+maxZ, minZ = findMaxMin(z)
+print("Total number of name data: " + str(len(name)))
+print("number of data points between " + str(zeroDecDown) + " and " + str(zeroDecUp) + " dec: " + str(findZeroDec(dec)))
+print("z value range from " + str(maxZ) + " to " + str(minZ))
+ave_z, dist, v = plotLinearH()
+print(ave_z)
+Color = calculateColor(ave_z, dist, v)
+figure=plot_mwd(ra, dec, Color, True)
+
+for i in range(len(ra)):
+    if ra[i]>180:
+        ra[i] = ra[i]-360
+
+local_H0=[]
+for i in range((len(dist))):
+    local_H0.append(v[i]/dist[i])
+data_to_sample=[]
+data_to_sample.append(np.radians(ra))
+data_to_sample.append(np.radians(dec))
+data_to_sample.append(local_H0)
+
+data_sampled=sampling(data_to_sample,20,20)
 plot_rect(data_sampled)
 plt.show()
-
-
-#image= np.array(plt.imread('Figure_1.png',2))
-#myplot=plt.imshow(image)
-#plt.colorbar(myplot)
-#plt.show()
