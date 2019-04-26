@@ -87,7 +87,7 @@ def sampling(data,n_rows,n_cols):
         x_low_list = np.arange(x_low,x_i*n_cols,x_i)   
         
         if multiprocess == True:
-            with Pool() as p:
+            with Pool(7) as p:
                 partial_map = partial(x_search, x, y, z, x_i=x_i, y_low=y_low, y_i=y_i)
                 x_search_data = p.map(partial_map, x_low_list)
                 sampled_data.append(x_search_data)
@@ -142,7 +142,7 @@ def savedata(save_filename,data):
 #plot_test(get_galactic(fname,NSIDE),niter=30)
 #plot_test(get_ecliptic(fname,NSIDE),niter=30)
 
-sampled_data = sampling(get_galactic(fname,NSIDE),N_SAMPLES,N_SAMPLES)
+sampled_data = sampling(get_ecliptic(fname,NSIDE),N_SAMPLES,N_SAMPLES)
 savedata(save_filename,sampled_data)
 plot_rect(sampled_data)
 
