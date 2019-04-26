@@ -3,18 +3,24 @@
 # Takes Planck CMB data fits file and converts into array in various ways:
 #   (1) galactic coord with max sample (get_galactic())
 #   (2) ecliptic coord with max sample (get_ecliptic())
-#   (3) at specified resolution (down sampling)
+#   (3) at specified resolution (sampling())
 #   (4) scatter test plot (plot_test())
-#   (5) rectangular plot(plot_rect())
+#   (5) rectangular plot(plot_rect()) # complete version of this function is in CMB_vs_H0.py
 #
 # author: Yukei Murakami (sterling.astro@berkeley.edu)
-# last edit: 4/23/2019
+# last edit: 4/26/2019
 
 import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
 import astropy_healpix as ap_h
 import pickle
+from multiprocessing import Pool
+import multiprocessing
+from functools import partial
+
+multiprocess = True # change to turn on/off multicore processing
+N_SAMPLES = 60
 NSIDE = 1024
 fname = "LFI_SkyMap_030_1024_R2.01_full.fits"
 save_filename = "CMB_sampled.dat"
@@ -47,6 +53,21 @@ def get_ecliptic(fname,NSIDE):
     z_e = hp.Rotator(coord='ge',deg=False).rotate_map_alms(hp.read_map(fname))
     return [x,y,z_e]
 
+def x_search(x,y,z,x_low,x_i,y_low,y_i):
+    local_total = 0
+    local_count = 0
+    for k in range(len(z)):
+        if (x_low <= x[k] and x[k] < (x_low + x_i))\
+                and (y_low <= y[k] and y[k] < (y_low + y_i)):
+            local_total += z[k]
+            local_count += 1
+    if local_count != 0:
+        local_avg = local_total / local_count
+    else:
+        local_avg = 0
+    local_data = [x_low,x_low+x_i,y_low,y_low+y_i,local_avg]
+    return local_data
+
 def sampling(data,n_rows,n_cols):
     # data
     x = data[0]
@@ -63,23 +84,31 @@ def sampling(data,n_rows,n_cols):
     sampled_data = []
     for i in range(n_rows):
         x_low = -np.pi # initial lower bound
-        for j in range(n_cols):
-            local_total = 0
-            local_count = 0
-            for k in range(len(z)):
-                if (x_low <= x[k] and x[k] < (x_low + x_i))\
-		and (y_low <= y[k] and y[k] < (y_low + y_i)):
-                    local_total += z[k]
-                    local_count += 1
-            if local_count != 0:
-                local_avg = local_total / local_count
-            else:
-                local_avg = 0
-            local_data = [x_low,x_low+x_i,y_low,y_low+y_i,local_avg]
-            sampled_data.append(local_data)
-            x_low += x_i
-            print('\rSampling Data: {:.1f}% done '.format((n_cols*i+j)*100/(n_rows*n_cols)),end='')
+        x_low_list = np.arange(x_low,x_i*n_cols,x_i)   
+        
+        if multiprocess == True:
+            with Pool() as p:
+                partial_map = partial(x_search, x, y, z, x_i=x_i, y_low=y_low, y_i=y_i)
+                x_search_data = p.map(partial_map, x_low_list)
+                sampled_data.append(x_search_data)
+        else:
+            for x_low in x_low_list:
+                local_total = 0
+                local_count = 0
+                for k in range(len(z)):
+                    if (x_low <= x[k] and x[k] < (x_low + x_i))\
+                            and (y_low <= y[k] and y[k] < (y_low + y_i)):
+                        local_total += z[k]
+                        local_count += 1
+                if local_count != 0:
+                    local_avg = local_total / local_count
+                else:
+                    local_avg = 0
+                local_data = [x_low,x_low+x_i,y_low,y_low+y_i,local_avg]
+                sampled_data.append(local_data)
+ 
         y_low += y_i
+        print('\rSampling Data: {:.1f}% done '.format(i*100/n_rows),end='')
     print('')
 	
     # return data: [[rad,rad,rad,rad,val], . . . ]
@@ -98,10 +127,7 @@ def plot_rect(data):
     data = np.array(data)
     data = data.transpose()
 
-    print(data)
-    # TODO: still need to work on this
-    # plot test: plots in mollweide projection with log scaling
-    # increase niter for faster plot (plots every 'niter'th point
+    #print(data)
     plt.figure(figsize=(10,6))
     ax = plt.subplot(111,projection='mollweide')
     ax.scatter((data[0]+data[1])/2,(data[2]+data[3])/2,c=np.log10(data[4]),s=100)
@@ -116,7 +142,7 @@ def savedata(save_filename,data):
 #plot_test(get_galactic(fname,NSIDE),niter=30)
 #plot_test(get_ecliptic(fname,NSIDE),niter=30)
 
-sampled_data = sampling(get_ecliptic(fname,NSIDE),20,20)
+sampled_data = sampling(get_galactic(fname,NSIDE),N_SAMPLES,N_SAMPLES)
 savedata(save_filename,sampled_data)
 plot_rect(sampled_data)
 

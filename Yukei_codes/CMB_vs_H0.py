@@ -10,7 +10,6 @@ import matplotlib as mpl
 import matplotlib.cm as cm
 import healpy as hp
 
-
 ##
 #@source: 1.Open Supernova Catalog
 #   2.https://www.cfa.harvard.edu/supernova/README_archive
