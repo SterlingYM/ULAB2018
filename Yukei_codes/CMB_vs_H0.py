@@ -5,7 +5,11 @@ import scipy.optimize as fitter
 from scipy.interpolate import griddata
 from matplotlib.colors import ListedColormap
 import pandas as pd
-#import healpy as hp
+import astropy_healpix as ap_h
+import matplotlib as mpl
+import matplotlib.cm as cm
+import healpy as hp
+
 
 ##
 #@source: 1.Open Supernova Catalog
@@ -17,8 +21,21 @@ import pandas as pd
 #where x-axis is the right ascension and y-axis is the declination
 #domain: x is [0, 360], y is [-90, 90]
 
-c = 3.0 * 10 ** 5 #unit [km/s]
+
+### Parameters ###
+# Settings
+show_plot = True  # change this to turn on/off plot
+
+# constants
+c = 3.0 * 10 ** 5 # in [km/s]
+
+# data files, data properties
 fileName = 'Name2E(B-V).csv'
+cmb_fname = "LFI_SkyMap_030_1024_R2.01_full.fits"
+dat_filename = 'CMB_sampled.dat'
+NSIDE = 1024
+
+# data manip. parameters
 upFilter = 0.1
 downFilter = -0.1
 nameIND = 0
@@ -35,6 +52,8 @@ dustA = 0 #dust value to adjust distance calculation
 zeroDecUp = 2
 zeroDecDown = -2
 
+
+### functions ###
 def hasAllColumns(row, totColNum):
     for i in range(totColNum):
         if row[i] == '':
@@ -97,10 +116,6 @@ def dist_velocity(name, app_mag, abs_mag, z, ebv):
             dist_rej.append(x)
             v_rej.append(y)
     return approved_SNe_data, dist, v, rejected_SNe_data, dist_rej, v_rej
-
-
-
-
 
 #if it does not exist, put -1; if multiple value, take arithmetic mean
 def purifyValues(v, isDeg, hasSign):
@@ -169,13 +184,13 @@ def degreeToRadian(ra, dec):
 
 def plotLinearH():
     approved_data, dist, v, rejected_data, dist_rej, v_rej = dist_velocity(name, app_mag, abs_mag, z, ebv)
-    print("Total number of data: " + str(len(v)))
-    print("Total number of rejected data: " + str(len(v_rej)))
+    #print("Total number of data: " + str(len(v)))
+    #print("Total number of rejected data: " + str(len(v_rej)))
     #plt.figure(figsize = (15,5))
     #plt.scatter(dist, v, s = 5, c = 'blue')
     #plt.show()
 
-    print("\n\nPart 2: fitting")
+    #print("\n\nPart 2: fitting")
     ave_z = fitting(my_model0, dist, v)
     return ave_z, dist, v
 
@@ -211,12 +226,12 @@ def calculateColor(ave_z, dist, v):
             if Color[i] < downFilter:
                 Color[i] = downFilter
                 under = under + 1
-    print(max)
-    print(len(Color))
-    print(over)
-    print(under)
-    for i in range(4):
-        print(Color[i])
+    #print(max)
+    #print(len(Color))
+    #print(over)
+    #print(under)
+    #for i in range(4):
+        #print(Color[i])
 
     np.savetxt("calculatedColor.cvs", Color, delimiter=",")
 
@@ -251,10 +266,8 @@ def fitting(model, xdata, ydata):
     #plt.show()
 
     # result
-    print("Hubble Constant H0 = {:.4} [km/(s*pc)]".format(par[0]))
+    #print("Hubble Constant H0 = {:.4} [km/(s*Mpc)]".format(par[0]*1E6))
     return par[0]
-    #print("y-intercept: " + str(par[1]))
-    #print("accel: " + str(par[1]))
 
 def plot_mwd(RA, Dec, Color, ifFillRect, org=0, title='Mollweide projection', projection='mollweide'):
     ''' RA, Dec are arrays of the same length.
@@ -277,7 +290,7 @@ def plot_mwd(RA, Dec, Color, ifFillRect, org=0, title='Mollweide projection', pr
     fig = plt.figure(figsize=(10, 5))
     ax = fig.add_subplot(111, projection=projection, facecolor ='darkgray')
     rand = np.random.random_sample((8651,))
-    ax.scatter(np.radians(x), np.radians(Dec), c = Color, s = 1, alpha=1, cmap= colombi1_cmap)  # convert degrees to radians
+    ax.scatter(np.radians(x), np.radians(Dec), c = Color, s = 50, alpha=1, cmap= colombi1_cmap)  # convert degrees to radians
     #fig.colorbar(ax, orientation='horizontal', fraction=.1)
     #ax.scatter(0, 0, c='red', s = 10)
     if ifFillRect:
@@ -291,9 +304,7 @@ def plot_mwd(RA, Dec, Color, ifFillRect, org=0, title='Mollweide projection', pr
     ax.set_ylabel("Dec")
     ax.yaxis.label.set_fontsize(12)
     ax.grid(True)
-    plt.show()
-
-
+    plt.draw()
 
 def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
     whiteOutLimit = 1 #if num < whiteOutLimit, the region becomes white
@@ -334,9 +345,6 @@ def fillRect(ra, dec, Color, rectW, rectH, ax): #sliced average
                 index = (int)((rectColor[row][col] - downFilter) * 255/ (upFilter-downFilter))
                 fillColor = colorArray[index]
                 ax.fill_between(W, np.radians(row * rectH - 90), np.radians((row + 1) * rectH - 90 + fillGapH), facecolor = fillColor)
-                #print(index)
-    #ax.fill_between(np.arange(np.radians(-170), np.radians(-150), 0.01), np.radians(-20), np.radians(20), facecolor = colorArray[255])
-
 
 def sampling(data,n_rows,n_cols):
     # data
@@ -376,26 +384,87 @@ def sampling(data,n_rows,n_cols):
     # return data: [[rad,rad,rad,rad,val], . . . ]
     return sampled_data
 
-
-def plot_rect(data):
+def plot_rect(data,title):
+    # data
     data = np.array(data)
-
     data = data.transpose()
+    print("\n* {} data".format(title))
+    print(data) 
 
-    print(data)
-    # TODO: still need to work on this
-    # plot test: plots in mollweide projection with log scaling
-    # increase niter for faster plot (plots every 'niter'th point
+    # prepare color map
+    val = data[4]
+    #val[val==0] = np.nan
+    val_avg = np.nanmean(data[:, 1:])
+    
+    #TODO: parameterize
+    val_dev = (data[4] - val_avg)/val_avg
+    norm = mpl.colors.Normalize(vmin=val.min(), vmax=val.max())
+    cmap = cm.summer
+    c = cm.ScalarMappable(norm=norm,cmap=cmap)
+    
+    # plot
     plt.figure(figsize=(10,6))
     ax = plt.subplot(111,projection='mollweide')
-    ax.scatter((data[0]+data[1])/2,(data[2]+data[3])/2,c=np.log10(data[4]),s=100)
+    #ax.scatter((data[0]+data[1])/2,(data[2]+data[3])/2,c=np.log10(data[4]),s=100)
+    for i in range(len(data[0])):
+        ax.fill_between(
+                [data[0][i],data[1][i]],
+                [data[2][i],data[2][i]],
+                [data[3][i],data[3][i]],
+                color = c.to_rgba(val[i])   
+                )
+    plt.title(title)
     plt.draw()
 
+def get_lonlat(NSIDE):
+    # index to coord
+    hp_index = np.arange(hp.nside2npix(NSIDE))
+    lon,lat = ap_h.healpix_to_lonlat(hp_index,nside=NSIDE,order='ring')
+    x = lon.degree
+    for i in range(len(x)):
+        if x[i]>180:
+            x[i] = x[i]-360
+    x = np.radians(x)
+    y = np.radians(lat.degree)
+    return x,y
+    
+def get_galactic(fname,NSIDE):
+    # Galactic coord data:
+    # returns array of [[radians,radians,value], . . . ]
+    print('Generating data (galactic): it may take a while.')
+    x,y = get_lonlat(NSIDE)
+    z = hp.read_map(fname)
+    return [x,y,z]
+    
+def get_ecliptic(fname,NSIDE):
+    # Ecliptic coord data:
+    # returns array of [[radians,radians,value], . . . ]
+    print('\n* Generating data (ecliptic): it may take a while.')
+    x,y = get_lonlat(NSIDE)
+    z_e = hp.Rotator(coord='ge',deg=False).rotate_map_alms(hp.read_map(fname))
+    return [x,y,z_e]
 
+def read_datfile(dat_filename):
+    import pickle
+    inputdata = open(dat_filename,'rb')
+    saved_data = pickle.load(inputdata)
+    return saved_data
 
-#main
+def scatter_plot(data,niter=30):
+    # takes data in [ra,dec,val] format
+    # plot test: plots in mollweide projection with log scaling
+    # increase niter for faster plot (plots every 'niter'th point
+    # (often large data slows down plotting)
+    plt.figure(figsize=(10,6))
+    ax = plt.subplot(111,projection='mollweide')
+    ax.scatter(data[0][0::niter],data[1][0::niter],c=np.log10(data[2][0::niter]),s=1)
+    plt.draw()
+
+## main ##
+
+## H0 data prep
+print("* Generating H0 data . . . ", end='')
 name, date, app_mag, abs_mag, ra, dec, z, SNeType, ebv = readIn(fileName)
-
 ra = purifyValues(ra, True, False)
 dec = purifyValues(dec, True, True)
 raDegree = raToDegree(ra)
@@ -404,20 +473,32 @@ app_mag = str2float(app_mag)
 abs_mag = str2float(abs_mag)
 ebv = str2float(ebv)
 raRad, decRad = degreeToRadian(ra, dec)
-
 maxZ, minZ = findMaxMin(z)
-print("Total number of name data: " + str(len(name)))
-print("number of data points between " + str(zeroDecDown) + " and " + str(zeroDecUp) + " dec: " + str(findZeroDec(dec)))
-print("z value range from " + str(maxZ) + " to " + str(minZ))
 ave_z, dist, v = plotLinearH()
-print(ave_z)
 Color = calculateColor(ave_z, dist, v)
-figure=plot_mwd(ra, dec, Color, True)
+figure=plot_mwd(ra, dec, Color, False) # <-------------- Original data plot
+print("DONE")
 
+# CMB original data plot
+scatter_plot(get_ecliptic(cmb_fname,NSIDE),niter=30) # <---- Original data plot
+
+# output
+print("\n* H0 data overview:")
+print(" - Total number of name data: " + str(len(name)))
+print(" - number of data points between " + str(zeroDecDown) + " and " + str(zeroDecUp) + " dec: " + str(findZeroDec(dec)))
+print(" - z value range from " + str(maxZ) + " to " + str(minZ))
+print(" - Average value of H0: {}".format(ave_z))
+
+## 2: sampling
+# CMB data
+CMB_sampled = read_datfile(dat_filename)
+plot_rect(CMB_sampled,"CMB sampled")   # <--------------- sampled data plot
+
+# SNe H0 data
+# Note that format of data a function takes in is different from the first part.
 for i in range(len(ra)):
     if ra[i]>180:
         ra[i] = ra[i]-360
-
 local_H0=[]
 for i in range((len(dist))):
     local_H0.append(v[i]/dist[i])
@@ -425,7 +506,10 @@ data_to_sample=[]
 data_to_sample.append(np.radians(ra))
 data_to_sample.append(np.radians(dec))
 data_to_sample.append(local_H0)
-
 data_sampled=sampling(data_to_sample,20,20)
-plot_rect(data_sampled)
-plt.show()
+plot_rect(data_sampled,"H0 sampled")  # <--------------- sampled data plot
+
+
+# turn on/off plots
+if show_plot:
+    plt.show()

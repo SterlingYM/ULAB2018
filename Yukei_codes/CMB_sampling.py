@@ -14,9 +14,10 @@ import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
 import astropy_healpix as ap_h
-
+import pickle
 NSIDE = 1024
 fname = "LFI_SkyMap_030_1024_R2.01_full.fits"
+save_filename = "CMB_sampled.dat"
 
 def get_lonlat(NSIDE):
     # index to coord
@@ -106,12 +107,17 @@ def plot_rect(data):
     ax.scatter((data[0]+data[1])/2,(data[2]+data[3])/2,c=np.log10(data[4]),s=100)
     plt.draw()
 
-    return 0
+def savedata(save_filename,data):
+    output=open(save_filename,'wb')
+    pickle.dump(data,output)
+    output.close()
 
 # main
 #plot_test(get_galactic(fname,NSIDE),niter=30)
 #plot_test(get_ecliptic(fname,NSIDE),niter=30)
 
-rect_data = sampling(get_ecliptic(fname,NSIDE),16,16)
-plot_rect(rect_data)
+sampled_data = sampling(get_ecliptic(fname,NSIDE),20,20)
+savedata(save_filename,sampled_data)
+plot_rect(sampled_data)
+
 plt.show()
