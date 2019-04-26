@@ -31,8 +31,9 @@ c = 3.0 * 10 ** 5 # in [km/s]
 # data files, data properties
 fileName = 'Name2E(B-V).csv'
 cmb_fname = "LFI_SkyMap_030_1024_R2.01_full.fits"
-dat_filename = 'CMB_sampled.dat'
+dat_filename = 'CMB_60x60.dat'
 NSIDE = 1024
+N_SAMPLE = 60
 
 # data manip. parameters
 upFilter = 0.1
@@ -505,7 +506,7 @@ data_to_sample=[]
 data_to_sample.append(np.radians(ra))
 data_to_sample.append(np.radians(dec))
 data_to_sample.append(local_H0)
-data_sampled=sampling(data_to_sample,20,20)
+data_sampled=sampling(data_to_sample,N_SAMPLE,N_SAMPLE)
 plot_rect(data_sampled,"H0 sampled")  # <--------------- sampled data plot
 
 

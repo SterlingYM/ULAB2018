@@ -90,7 +90,7 @@ def sampling(data,n_rows,n_cols):
             with Pool(7) as p:
                 partial_map = partial(x_search, x, y, z, x_i=x_i, y_low=y_low, y_i=y_i)
                 x_search_data = p.map(partial_map, x_low_list)
-                sampled_data.append(x_search_data)
+                sampled_data.extend(x_search_data)
         else:
             for x_low in x_low_list:
                 local_total = 0
