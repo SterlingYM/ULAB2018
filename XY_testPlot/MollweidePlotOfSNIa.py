@@ -164,7 +164,7 @@ def plot_mwd(RA,Dec,org=0,title='Mollweide projection', projection='mollweide'):
             x[i] -=360    # scale conversion to [-180, 180]
         x[i] =-x[i]    # reverse the scale: East to the left
 
-    tick_labels = np.array([150, 120, 90, 60, 30, 0, 330, 300, 270, 240, 210])
+    tick_labels = np.array([-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150])
     tick_labels = np.remainder(tick_labels+360+org,360)
     fig = plt.figure(figsize=(10, 5))
     ax = fig.add_subplot(111, projection=projection, facecolor ='LightCyan')
