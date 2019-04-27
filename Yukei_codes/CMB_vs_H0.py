@@ -389,19 +389,19 @@ def plot_rect(data,title):
     data = np.array(data)
     data = data.transpose()
     print("\n* {} data".format(title))
-    print(data) 
+    print(data)
 
     # prepare color map
     val = data[4]
     #val[val==0] = np.nan
     val_avg = np.nanmean(data[:, 1:])
-    
+
     #TODO: parameterize
     val_dev = (data[4] - val_avg)/val_avg
     norm = mpl.colors.Normalize(vmin=val.min(), vmax=val.max())
     cmap = cm.summer
     c = cm.ScalarMappable(norm=norm,cmap=cmap)
-    
+
     # plot
     plt.figure(figsize=(10,6))
     ax = plt.subplot(111,projection='mollweide')
@@ -411,7 +411,7 @@ def plot_rect(data,title):
                 [data[0][i],data[1][i]],
                 [data[2][i],data[2][i]],
                 [data[3][i],data[3][i]],
-                color = c.to_rgba(val[i])   
+                color = c.to_rgba(val[i])
                 )
     plt.title(title)
     plt.draw()
@@ -427,7 +427,7 @@ def get_lonlat(NSIDE):
     x = np.radians(x)
     y = np.radians(lat.degree)
     return x,y
-    
+
 def get_galactic(fname,NSIDE):
     # Galactic coord data:
     # returns array of [[radians,radians,value], . . . ]
@@ -435,7 +435,7 @@ def get_galactic(fname,NSIDE):
     x,y = get_lonlat(NSIDE)
     z = hp.read_map(fname)
     return [x,y,z]
-    
+
 def get_ecliptic(fname,NSIDE):
     # Ecliptic coord data:
     # returns array of [[radians,radians,value], . . . ]
@@ -459,6 +459,18 @@ def scatter_plot(data,niter=30):
     ax = plt.subplot(111,projection='mollweide')
     ax.scatter(data[0][0::niter],data[1][0::niter],c=np.log10(data[2][0::niter]),s=1)
     plt.draw()
+
+def remove_zeros(data):
+    clean_data=[]
+    for i in data:
+        if not data[i]==0:
+            clean_data.append(data[i])
+    return clean_data
+
+
+
+
+
 
 ## main ##
 
@@ -489,6 +501,7 @@ print(" - number of data points between " + str(zeroDecDown) + " and " + str(zer
 print(" - z value range from " + str(maxZ) + " to " + str(minZ))
 print(" - Average value of H0: {}".format(ave_z))
 
+
 ## 2: sampling
 # CMB data
 CMB_sampled = read_datfile(dat_filename)
@@ -507,6 +520,7 @@ data_to_sample.append(np.radians(ra))
 data_to_sample.append(np.radians(dec))
 data_to_sample.append(local_H0)
 data_sampled=sampling(data_to_sample,N_SAMPLE,N_SAMPLE)
+print("Standard Deviaton of H0: {}").format(np.stdev(remove_zeros(data_sampled)))
 plot_rect(data_sampled,"H0 sampled")  # <--------------- sampled data plot
 
 
