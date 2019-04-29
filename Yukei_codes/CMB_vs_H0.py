@@ -460,13 +460,41 @@ def scatter_plot(data,niter=30):
     ax.scatter(data[0][0::niter],data[1][0::niter],c=np.log10(data[2][0::niter]),s=1)
     plt.draw()
 
-def remove_zeros(data):
+
+def remove_vals(data, val=0):
     clean_data=[]
-    for i in data:
-        if not data[i]==0:
+    for i in range(len(data)):
+        if not data[i][4]==val:
             clean_data.append(data[i])
     return clean_data
 
+def remove_nonexistent(data):
+    clean_data=[]
+    for i in range(len(data)):
+        if data[i]!=1:
+            clean_data.append(data[i])
+    return clean_data
+
+def get_difference_error(CMB,Sn1):
+    error=[]
+    for i in range(len(Sn1)):
+            if CMB[i][4]!=0:
+                error.append(abs(CMB[i][4]-Sn1[i][4])/ CMB[i][4] )
+    return error
+
+def get_variation_error(sampled_data,avg):
+    error=[]
+    for i in range(len(sampled_data)):
+        error.append(abs(sampled_data[i][4]-avg)/ avg )
+    return error
+
+
+def count_nonexistent(error):
+    total=0
+    for i in range(len(error)):
+        if error[i]==1:
+            total+=1
+    return total
 
 
 
