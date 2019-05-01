@@ -392,6 +392,7 @@ def plot_rect(data,title):
     print(data)
 
     # prepare color map
+
     val = data[4]
     #val[val==0] = np.nan
     val_avg = np.nanmean(data[:, 1:])
@@ -415,6 +416,9 @@ def plot_rect(data,title):
                 )
     plt.title(title)
     plt.draw()
+
+
+
 
 def get_lonlat(NSIDE):
     # index to coord
@@ -460,7 +464,6 @@ def scatter_plot(data,niter=30):
     ax.scatter(data[0][0::niter],data[1][0::niter],c=np.log10(data[2][0::niter]),s=1)
     plt.draw()
 
-
 def remove_vals(data, val=0):
     clean_data=[]
     for i in range(len(data)):
@@ -488,6 +491,14 @@ def get_variation_error(sampled_data,avg):
         error.append(abs(sampled_data[i][4]-avg)/ avg )
     return error
 
+def modify(H0,CMB):
+    dummy=H0.copy()
+    for i in range(len(dummy)):
+        dummy[i].pop()
+        dummy[i].append(CMB[i])
+    return dummy
+
+
 
 def count_nonexistent(error):
     total=0
@@ -495,6 +506,10 @@ def count_nonexistent(error):
         if error[i]==1:
             total+=1
     return total
+
+
+
+
 
 
 
@@ -548,9 +563,22 @@ data_to_sample.append(np.radians(ra))
 data_to_sample.append(np.radians(dec))
 data_to_sample.append(local_H0)
 data_sampled=sampling(data_to_sample,N_SAMPLE,N_SAMPLE)
-print("Standard Deviaton of H0: {}").format(np.stdev(remove_zeros(data_sampled)))
-plot_rect(data_sampled,"H0 sampled")  # <--------------- sampled data plot
+print("Standard Deviaton of H0: {}".format(np.std(remove_vals(CMB_sampled))))
+total=0
+for i in range(len(CMB_sampled)):
+    total+=CMB_sampled[i][4]
+avg_CMB=total/(len(CMB_sampled))
+CMB_var=get_variation_error(CMB_sampled,avg_CMB)
+CMB_var_location=modify(data_sampled,CMB_var)
 
+
+
+
+
+
+
+plot_rect(data_sampled,"H0 sampled")  # <--------------- sampled data plot
+plot_rect(CMB_var_location, "CMB Variation")
 
 # turn on/off plots
 if show_plot:
