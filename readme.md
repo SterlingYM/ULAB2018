@@ -1,7 +1,9 @@
 # ULAB 2018 garage
 This git repository is created to store and share codes created for ULAB 2018 cosmology group. 
 
-All rights reserved, ULAB Cosmology group 2018
+For requests and questions, contact ULAB: info@ulab.berkeley.edu
+
+All code and data are free to use at your own responsibility.
 
 ---------
 ### Contents:
