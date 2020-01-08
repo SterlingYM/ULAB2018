@@ -6,6 +6,8 @@ For requests and questions, contact ULAB: info@ulab.berkeley.edu
 All code and data are free to use at your own responsibility.
 
 ---------
+![ULAB 2018 poster](ULAB2018.png)
+---------
 ### Contents:
 - 'Hubble_Plot.py': ULAB workshop for hubble diagram.
 - 'The Open Supernova Catalog.csv': data for Hubble_Plot.py
